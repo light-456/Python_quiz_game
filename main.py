@@ -271,6 +271,14 @@ class QuizGame:
         quizzes_to_play = self.quizzes.copy()
         random.shuffle(quizzes_to_play)
 
+        max_count = len(quizzes_to_play)
+        count = self.get_number_input(
+            f"풀 문제 수를 입력하세요(1~{max_count}): ",
+            1,
+            max_count
+        )
+        quizzes_to_play = quizzes_to_play[:count]
+
         score = 0
         total = len(quizzes_to_play)
 
