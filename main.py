@@ -227,8 +227,9 @@ class QuizGame:
         print("1. 퀴즈 풀기")
         print("2. 퀴즈 추가")
         print("3. 퀴즈 목록")
-        print("4. 최고 점수 확인")
-        print("5. 종료")
+        print("4. 퀴즈 삭제")
+        print("5. 최고 점수 확인")
+        print("6. 종료")
         print("=" * 40)
 
     def get_nonempty_input(self, message):
@@ -372,6 +373,30 @@ class QuizGame:
 
         print("\n퀴즈 목록을 모두 확인했습니다.")
 
+    def delete_quiz(self):
+        """등록된 퀴즈를 번호로 선택해 삭제합니다."""
+
+        print("\n[퀴즈 삭제]")
+
+        if not self.quizzes:
+            print("등록된 퀴즈가 없습니다.")
+            return
+
+        self.show_quizzes()
+
+        index = self.get_number_input(
+            f"삭제할 퀴즈 번호를 입력하세요(1~{len(self.quizzes)}): ",
+            1,
+            len(self.quizzes)
+        )
+
+        removed = self.quizzes.pop(index - 1)
+
+        print(f"\n삭제되었습니다: {removed.question}")
+        print(f"현재 등록된 퀴즈 수: {len(self.quizzes)}개")
+
+        self.save_state()
+
     def show_high_score(self):
         """최고 점수를 보여줍니다."""
 
@@ -398,7 +423,7 @@ class QuizGame:
                 choice = self.get_number_input(
                     "메뉴 번호를 선택하세요: ",
                     1,
-                    5
+                    6
                 )
 
                 if choice == 1:
@@ -411,9 +436,12 @@ class QuizGame:
                     self.show_quizzes()
 
                 elif choice == 4:
-                    self.show_high_score()
+                    self.delete_quiz()
 
                 elif choice == 5:
+                    self.show_high_score()
+
+                elif choice == 6:
                     print("\n심신통합 헬스케어 퀴즈를 종료합니다.")
                     break
 
