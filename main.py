@@ -3,6 +3,7 @@
 # 데이터 저장 파일: state.json
 
 import json
+import random
 from pathlib import Path
 
 
@@ -263,14 +264,17 @@ class QuizGame:
 
         print("\n[심신통합 헬스케어 퀴즈 시작]")
 
-        score = 0
-        total = len(self.quizzes)
-
-        if total == 0:
+        if not self.quizzes:
             print("등록된 퀴즈가 없습니다.")
             return
 
-        for number, quiz in enumerate(self.quizzes, start=1):
+        quizzes_to_play = self.quizzes.copy()
+        random.shuffle(quizzes_to_play)
+
+        score = 0
+        total = len(quizzes_to_play)
+
+        for number, quiz in enumerate(quizzes_to_play, start=1):
             print("\n" + "-" * 40)
             print(f"문제 {number}. {quiz.question}")
 
