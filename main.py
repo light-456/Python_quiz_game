@@ -4,6 +4,7 @@
 
 import json
 import random
+from datetime import datetime
 from pathlib import Path
 
 
@@ -36,6 +37,7 @@ class QuizGame:
         self.high_score = 0
         self.high_score_correct = 0
         self.high_score_total = 0
+        self.score_history = []
         self.load_state()
 
     def get_default_quizzes(self):
@@ -172,6 +174,11 @@ class QuizGame:
                 0, int(data.get("high_score_total", 0))
             )
 
+            loaded_history = data.get("score_history", [])
+            self.score_history = (
+                loaded_history if isinstance(loaded_history, list) else []
+            )
+
             print("저장된 퀴즈 데이터를 불러왔습니다.")
 
             # 기존 데이터에 없던 해설도 저장 파일에 반영합니다.
@@ -191,6 +198,7 @@ class QuizGame:
             self.high_score = 0
             self.high_score_correct = 0
             self.high_score_total = 0
+            self.score_history = []
 
             self.save_state()
 
@@ -203,7 +211,8 @@ class QuizGame:
             ],
             "high_score": self.high_score,
             "high_score_correct": self.high_score_correct,
-            "high_score_total": self.high_score_total
+            "high_score_total": self.high_score_total,
+            "score_history": self.score_history
         }
 
         try:
@@ -229,7 +238,8 @@ class QuizGame:
         print("3. 퀴즈 목록")
         print("4. 퀴즈 삭제")
         print("5. 최고 점수 확인")
-        print("6. 종료")
+        print("6. 점수 기록 히스토리")
+        print("7. 종료")
         print("=" * 40)
 
     def get_nonempty_input(self, message):
@@ -316,6 +326,13 @@ class QuizGame:
             self.high_score_correct = score
             self.high_score_total = total
             print("\n축하합니다! 최고 점수를 갱신했습니다.")
+
+        self.score_history.append({
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "correct": score,
+            "total": total,
+            "percentage": percentage
+        })
 
         self.save_state()
 
@@ -411,6 +428,22 @@ class QuizGame:
                 f"/{self.high_score_total}문제"
             )
 
+    def show_score_history(self):
+        """지금까지 플레이한 모든 기록을 보여줍니다."""
+
+        print("\n===== 점수 기록 히스토리 =====")
+
+        if not self.score_history:
+            print("아직 기록이 없습니다.")
+            return
+
+        for number, record in enumerate(self.score_history, start=1):
+            print(
+                f"[{number}] {record.get('timestamp', '-')}  "
+                f"{record.get('correct', 0)}/{record.get('total', 0)}문제  "
+                f"({record.get('percentage', 0)}점)"
+            )
+
     def run(self):
         """프로그램을 실행합니다."""
 
@@ -423,7 +456,7 @@ class QuizGame:
                 choice = self.get_number_input(
                     "메뉴 번호를 선택하세요: ",
                     1,
-                    6
+                    7
                 )
 
                 if choice == 1:
@@ -442,6 +475,9 @@ class QuizGame:
                     self.show_high_score()
 
                 elif choice == 6:
+                    self.show_score_history()
+
+                elif choice == 7:
                     print("\n심신통합 헬스케어 퀴즈를 종료합니다.")
                     break
 
