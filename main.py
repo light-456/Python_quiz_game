@@ -6,24 +6,24 @@ import json
 from pathlib import Path
 
 
-# 프로젝트 폴더 안에 state.json 파일을 생성합니다.
 DATA_FILE = Path(__file__).with_name("state.json")
 
 
 class Quiz:
     """퀴즈 한 문제의 정보를 관리하는 클래스"""
 
-    def __init__(self, question, choices, answer):
+    def __init__(self, question, choices, answer, explanation=""):
         self.question = question
         self.choices = choices
         self.answer = answer
+        self.explanation = explanation
 
     def to_dict(self):
-        """퀴즈 정보를 저장할 수 있는 딕셔너리로 변환합니다."""
         return {
             "question": self.question,
             "choices": self.choices,
-            "answer": self.answer
+            "answer": self.answer,
+            "explanation": self.explanation
         }
 
 
@@ -32,17 +32,13 @@ class QuizGame:
 
     def __init__(self):
         self.quizzes = self.get_default_quizzes()
-
-        # 최고 점수 정보
         self.high_score = 0
         self.high_score_correct = 0
         self.high_score_total = 0
-
-        # 저장된 데이터가 있으면 불러옵니다.
         self.load_state()
 
     def get_default_quizzes(self):
-        """처음 실행할 때 사용할 기본 퀴즈 5개를 만듭니다."""
+        """기본 퀴즈 5개와 해설을 준비합니다."""
 
         return [
             Quiz(
@@ -53,7 +49,8 @@ class QuizGame:
                     "무조건 운동량 늘리기",
                     "불편한 감정 무시하기"
                 ],
-                2
+                2,
+                "자신의 현재 상태를 알아차려야 필요한 휴식과 활동을 적절하게 선택할 수 있습니다."
             ),
             Quiz(
                 "스트레스를 느낄 때 도움이 되는 행동은 무엇일까요?",
@@ -63,7 +60,8 @@ class QuizGame:
                     "휴식 없이 계속 일하기",
                     "주변 사람에게 화내기"
                 ],
-                1
+                1,
+                "호흡과 몸의 변화를 살펴보면 스트레스 상태를 알아차리고 자신에게 필요한 대응을 선택하는 데 도움이 됩니다."
             ),
             Quiz(
                 "일상적인 신체활동을 할 때 바람직한 태도는 무엇일까요?",
@@ -73,7 +71,8 @@ class QuizGame:
                     "자신의 체력에 맞게 무리하지 않기",
                     "준비 없이 갑자기 강하게 운동하기"
                 ],
-                3
+                3,
+                "신체활동은 다른 사람과 비교하기보다 자신의 체력과 컨디션에 맞춰 안전하게 실천하는 것이 중요합니다."
             ),
             Quiz(
                 "건강한 수면 습관을 위한 방법으로 적절한 것은 무엇일까요?",
@@ -83,7 +82,8 @@ class QuizGame:
                     "잠이 오지 않아도 억지로 버티기",
                     "일정한 수면 습관 유지하기"
                 ],
-                4
+                4,
+                "일정한 시간에 자고 일어나는 습관은 규칙적인 수면 리듬을 만드는 데 도움이 됩니다."
             ),
             Quiz(
                 "몸과 마음의 불편함이 지속되어 일상생활에 지장을 준다면 어떻게 해야 할까요?",
@@ -93,12 +93,13 @@ class QuizGame:
                     "증상을 다른 사람에게 숨기기",
                     "휴식과 상담을 모두 피하기"
                 ],
-                2
+                2,
+                "불편함이 지속되거나 일상생활에 영향을 준다면 혼자 참기보다 적절한 전문가의 도움을 받는 것이 좋습니다."
             )
         ]
 
     def load_state(self):
-        """state.json 파일에서 퀴즈와 최고 점수를 불러옵니다."""
+        """저장된 퀴즈와 최고 점수를 불러옵니다."""
 
         if not DATA_FILE.exists():
             print("\n저장된 데이터가 없습니다. 기본 퀴즈로 시작합니다.")
@@ -109,12 +110,29 @@ class QuizGame:
             with open(DATA_FILE, "r", encoding="utf-8") as file:
                 data = json.load(file)
 
+            if not isinstance(data, dict):
+                raise ValueError("저장 데이터 형식이 올바르지 않습니다.")
+
+            saved_quizzes = data.get("quizzes")
+
+            if not isinstance(saved_quizzes, list):
+                raise ValueError("퀴즈 목록 형식이 올바르지 않습니다.")
+
+            default_explanations = {
+                quiz.question: quiz.explanation
+                for quiz in self.get_default_quizzes()
+            }
+
             loaded_quizzes = []
 
-            for item in data["quizzes"]:
-                question = item["question"]
-                choices = item["choices"]
-                answer = item["answer"]
+            for item in saved_quizzes:
+                if not isinstance(item, dict):
+                    continue
+
+                question = item.get("question")
+                choices = item.get("choices")
+                answer = item.get("answer")
+                explanation = item.get("explanation", "")
 
                 if (
                     isinstance(question, str)
@@ -128,9 +146,16 @@ class QuizGame:
                     and isinstance(answer, int)
                     and not isinstance(answer, bool)
                     and 1 <= answer <= 4
+                    and isinstance(explanation, str)
                 ):
+                    if not explanation.strip():
+                        explanation = default_explanations.get(
+                            question,
+                            "이 문제의 핵심은 정답 선택지에 담긴 실천 방법을 일상에서 자신의 상태와 상황에 맞게 적용하는 것입니다."
+                        )
+
                     loaded_quizzes.append(
-                        Quiz(question, choices, answer)
+                        Quiz(question, choices, answer, explanation)
                     )
 
             if not loaded_quizzes:
@@ -148,6 +173,9 @@ class QuizGame:
 
             print("저장된 퀴즈 데이터를 불러왔습니다.")
 
+            # 기존 데이터에 없던 해설도 저장 파일에 반영합니다.
+            self.save_state()
+
         except (
             OSError,
             json.JSONDecodeError,
@@ -155,7 +183,7 @@ class QuizGame:
             TypeError,
             ValueError
         ):
-            print("\n저장 파일이 없거나 손상되었습니다.")
+            print("\n저장 파일이 손상되었거나 올바르지 않습니다.")
             print("기본 퀴즈 데이터로 다시 시작합니다.")
 
             self.quizzes = self.get_default_quizzes()
@@ -166,7 +194,7 @@ class QuizGame:
             self.save_state()
 
     def save_state(self):
-        """현재 퀴즈와 최고 점수를 state.json에 저장합니다."""
+        """현재 퀴즈와 최고 점수를 저장합니다."""
 
         data = {
             "quizzes": [
@@ -185,7 +213,6 @@ class QuizGame:
                     ensure_ascii=False,
                     indent=4
                 )
-
             return True
 
         except OSError as error:
@@ -193,8 +220,6 @@ class QuizGame:
             return False
 
     def show_menu(self):
-        """메뉴를 화면에 표시합니다."""
-
         print("\n" + "=" * 40)
         print("       심신통합 헬스케어 퀴즈")
         print("=" * 40)
@@ -206,8 +231,6 @@ class QuizGame:
         print("=" * 40)
 
     def get_nonempty_input(self, message):
-        """빈 입력을 허용하지 않고 다시 입력받습니다."""
-
         while True:
             value = input(message).strip()
 
@@ -217,8 +240,6 @@ class QuizGame:
             print("내용을 비워둘 수 없습니다. 다시 입력해 주세요.")
 
     def get_number_input(self, message, minimum, maximum):
-        """정해진 범위 안의 숫자를 입력받습니다."""
-
         while True:
             value = input(message).strip()
 
@@ -232,23 +253,26 @@ class QuizGame:
                 if minimum <= number <= maximum:
                     return number
 
-                print(
-                    f"{minimum}~{maximum} 사이의 번호를 입력하세요."
-                )
+                print(f"{minimum}~{maximum} 사이의 번호를 입력하세요.")
 
             except ValueError:
                 print("숫자로 입력해 주세요.")
 
     def play_quiz(self):
-        """등록된 퀴즈를 순서대로 출제합니다."""
+        """퀴즈를 풀고 정답과 해설을 보여줍니다."""
 
         print("\n[심신통합 헬스케어 퀴즈 시작]")
 
         score = 0
         total = len(self.quizzes)
 
+        if total == 0:
+            print("등록된 퀴즈가 없습니다.")
+            return
+
         for number, quiz in enumerate(self.quizzes, start=1):
-            print(f"\n문제 {number}. {quiz.question}")
+            print("\n" + "-" * 40)
+            print(f"문제 {number}. {quiz.question}")
 
             for i, choice in enumerate(quiz.choices, start=1):
                 print(f"{i}. {choice}")
@@ -265,6 +289,8 @@ class QuizGame:
             else:
                 print(f"아쉽습니다. 정답은 {quiz.answer}번입니다.")
 
+            print(f"해설: {quiz.explanation}")
+
         percentage = score * 100 // total
 
         print("\n===== 퀴즈 결과 =====")
@@ -276,19 +302,16 @@ class QuizGame:
             self.high_score = percentage
             self.high_score_correct = score
             self.high_score_total = total
-
             print("\n축하합니다! 최고 점수를 갱신했습니다.")
 
         self.save_state()
 
     def add_quiz(self):
-        """사용자가 새로운 퀴즈를 직접 추가합니다."""
+        """새로운 퀴즈와 해설을 추가합니다."""
 
         print("\n[새로운 퀴즈 추가]")
 
-        question = self.get_nonempty_input(
-            "문제를 입력하세요: "
-        )
+        question = self.get_nonempty_input("문제를 입력하세요: ")
 
         choices = []
 
@@ -304,7 +327,11 @@ class QuizGame:
             4
         )
 
-        new_quiz = Quiz(question, choices, answer)
+        explanation = self.get_nonempty_input(
+            "정답에 대한 해설을 입력하세요: "
+        )
+
+        new_quiz = Quiz(question, choices, answer, explanation)
         self.quizzes.append(new_quiz)
 
         print("\n새로운 퀴즈가 추가되었습니다!")
@@ -313,18 +340,28 @@ class QuizGame:
         self.save_state()
 
     def show_quizzes(self):
-        """등록된 퀴즈 목록을 보여줍니다."""
+        """등록된 퀴즈와 해설을 보여줍니다."""
 
-        print("\n[심신통합 헬스케어 퀴즈 목록]")
+        print("\n" + "=" * 40)
+        print("[심신통합 헬스케어 퀴즈 목록]")
+        print(f"현재 등록된 퀴즈: {len(self.quizzes)}개")
+        print("=" * 40)
 
         for number, quiz in enumerate(self.quizzes, start=1):
-            print(f"\n문제 {number}. {quiz.question}")
+            print(f"\n[문제 {number}]")
+            print(quiz.question)
 
             for i, choice in enumerate(quiz.choices, start=1):
                 print(f"  {i}. {choice}")
 
+            print(f"정답: {quiz.answer}번")
+            print(f"해설: {quiz.explanation}")
+            print("-" * 40)
+
+        print("\n퀴즈 목록을 모두 확인했습니다.")
+
     def show_high_score(self):
-        """저장된 최고 점수를 보여줍니다."""
+        """최고 점수를 보여줍니다."""
 
         print("\n===== 최고 점수 =====")
 
@@ -338,7 +375,7 @@ class QuizGame:
             )
 
     def run(self):
-        """프로그램을 실행하고 메뉴를 반복합니다."""
+        """프로그램을 실행합니다."""
 
         print("\n심신통합 헬스케어 퀴즈 게임에 오신 것을 환영합니다!")
 
@@ -346,31 +383,27 @@ class QuizGame:
             while True:
                 self.show_menu()
 
-                choice = input(
-                    "메뉴 번호를 선택하세요: "
-                ).strip()
+                choice = self.get_number_input(
+                    "메뉴 번호를 선택하세요: ",
+                    1,
+                    5
+                )
 
-                if choice == "1":
+                if choice == 1:
                     self.play_quiz()
 
-                elif choice == "2":
+                elif choice == 2:
                     self.add_quiz()
 
-                elif choice == "3":
+                elif choice == 3:
                     self.show_quizzes()
 
-                elif choice == "4":
+                elif choice == 4:
                     self.show_high_score()
 
-                elif choice == "5":
+                elif choice == 5:
                     print("\n심신통합 헬스케어 퀴즈를 종료합니다.")
                     break
-
-                else:
-                    print(
-                        "\n잘못된 입력입니다. "
-                        "1~5 사이의 번호를 입력하세요."
-                    )
 
         except (KeyboardInterrupt, EOFError):
             print("\n\n입력이 중단되었습니다.")
