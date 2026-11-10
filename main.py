@@ -4,11 +4,14 @@
 
 import json
 import random
+import shutil
 from datetime import datetime
 from pathlib import Path
 
 
 DATA_FILE = Path(__file__).with_name("state.json")
+# 손상된 저장 파일을 덮어쓰기 전에 보관해 두는 백업 파일
+BACKUP_FILE = Path(__file__).with_name("state.json.bak")
 
 
 class Quiz:
@@ -199,6 +202,7 @@ class QuizGame:
             ValueError
         ):
             print("\n저장 파일이 손상되었거나 올바르지 않습니다.")
+            self.backup_broken_file()
             print("기본 퀴즈 데이터로 다시 시작합니다.")
 
             self.quizzes = self.get_default_quizzes()
@@ -208,6 +212,18 @@ class QuizGame:
             self.score_history = []
 
             self.save_state()
+
+    def backup_broken_file(self):
+        """손상된 state.json을 state.json.bak으로 복사해 둡니다."""
+
+        try:
+            shutil.copyfile(DATA_FILE, BACKUP_FILE)
+            print(f"기존 파일은 {BACKUP_FILE.name}에 백업했습니다.")
+            return True
+
+        except OSError as error:
+            print(f"기존 파일을 백업하지 못했습니다: {error}")
+            return False
 
     def save_state(self):
         """현재 퀴즈와 최고 점수를 저장합니다."""
