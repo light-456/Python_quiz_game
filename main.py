@@ -161,7 +161,9 @@ class QuizGame:
                         Quiz(question, choices, answer, explanation)
                     )
 
-            if not loaded_quizzes:
+            # 저장된 퀴즈가 있었는데 하나도 올바르지 않으면 손상된 것으로 봅니다.
+            # (사용자가 모든 퀴즈를 삭제한 빈 목록은 정상 상태입니다.)
+            if saved_quizzes and not loaded_quizzes:
                 raise ValueError("저장된 퀴즈 데이터가 올바르지 않습니다.")
 
             self.quizzes = loaded_quizzes
@@ -175,9 +177,14 @@ class QuizGame:
             )
 
             loaded_history = data.get("score_history", [])
-            self.score_history = (
-                loaded_history if isinstance(loaded_history, list) else []
-            )
+            if not isinstance(loaded_history, list):
+                loaded_history = []
+
+            # 딕셔너리 형태의 기록만 사용합니다.
+            self.score_history = [
+                record for record in loaded_history
+                if isinstance(record, dict)
+            ]
 
             print("저장된 퀴즈 데이터를 불러왔습니다.")
 
@@ -276,7 +283,7 @@ class QuizGame:
         print("\n[심신통합 헬스케어 퀴즈 시작]")
 
         if not self.quizzes:
-            print("등록된 퀴즈가 없습니다.")
+            print("등록된 퀴즈가 없습니다. 2번 메뉴에서 퀴즈를 추가해 보세요.")
             return
 
         quizzes_to_play = self.quizzes.copy()
@@ -321,7 +328,8 @@ class QuizGame:
         print(f"맞힌 문제 수: {score}")
         print(f"점수: {percentage}점")
 
-        if percentage > self.high_score:
+        # 첫 기록이거나 기존 최고 점수보다 높으면 갱신합니다.
+        if self.high_score_total == 0 or percentage > self.high_score:
             self.high_score = percentage
             self.high_score_correct = score
             self.high_score_total = total
@@ -376,6 +384,10 @@ class QuizGame:
         print("[심신통합 헬스케어 퀴즈 목록]")
         print(f"현재 등록된 퀴즈: {len(self.quizzes)}개")
         print("=" * 40)
+
+        if not self.quizzes:
+            print("등록된 퀴즈가 없습니다. 2번 메뉴에서 퀴즈를 추가해 보세요.")
+            return
 
         for number, quiz in enumerate(self.quizzes, start=1):
             print(f"\n[문제 {number}]")
@@ -491,5 +503,10 @@ class QuizGame:
 
 
 if __name__ == "__main__":
-    game = QuizGame()
-    game.run()
+    try:
+        game = QuizGame()
+    except (KeyboardInterrupt, EOFError):
+        # 데이터를 불러오는 도중 중단되어도 비정상 종료하지 않습니다.
+        print("\n\n프로그램 시작이 중단되었습니다. 안전하게 종료합니다.")
+    else:
+        game.run()
