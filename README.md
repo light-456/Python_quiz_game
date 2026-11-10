@@ -22,7 +22,11 @@ Python으로 개발한 콘솔 기반 퀴즈 게임입니다.
 3. 다음 명령어를 실행합니다.
 
 ```bash
+# Windows
 py main.py
+
+# macOS / Linux
+python3 main.py
 ```
 
 ## 4. 기능 목록
@@ -54,7 +58,9 @@ python_quiz_game/
 ├── main.py         # Quiz, QuizGame 클래스와 게임 실행 로직
 ├── state.json       # 퀴즈 목록과 최고 점수를 저장하는 데이터 파일
 ├── README.md        # 프로젝트 설명 문서 (이 파일)
-└── .gitignore        # __pycache__, *.pyc, main_backup.py 등 추적 제외 목록
+├── .gitignore        # __pycache__, *.pyc, main_backup.py 등 추적 제외 목록
+└── docs/
+    └── screenshots/     # 실행 화면 캡처 이미지
 ```
 
 ## 6. 데이터 파일 설명 (state.json)
@@ -101,3 +107,23 @@ UTF-8 인코딩으로 저장됩니다. 프로그램을 종료했다가 다시 �
 `git clone`으로 이 저장소를 별도 폴더(`python_quiz_game_clone`)에 복제한 뒤,
 이 README에 이 섹션을 추가하고 `commit` → `push` 했습니다. 이후 원본 작업 폴더
 (`python_quiz_game`)에서 `git pull`로 이 변경 사항을 받아왔습니다.
+
+## 8. 실행 화면
+
+| 메뉴 | 퀴즈 풀기 |
+| --- | --- |
+| ![메뉴](docs/screenshots/menu.png) | ![퀴즈 풀기](docs/screenshots/play.png) |
+
+| 퀴즈 추가 | 퀴즈 목록 |
+| --- | --- |
+| ![퀴즈 추가](docs/screenshots/add_quiz.png) | ![퀴즈 목록](docs/screenshots/quiz_list.png) |
+
+| 최고 점수 확인 |
+| --- |
+| ![최고 점수](docs/screenshots/score.png) |
+
+## 9. 개발 환경 및 Git 기록
+
+| 개발 환경 | Git 기록 (`git log --oneline --graph`) |
+| --- | --- |
+| ![개발 환경](docs/screenshots/dev_environment.png) | ![Git 기록](docs/screenshots/git_log_graph.png) |
